@@ -2,7 +2,7 @@ package com.gs.driver;
 
 import java.util.Objects;
 
-public class OrderUpdate implements Comparable<OrderUpdate>{
+public class OrderUpdate {
     private final long theSequenceNumber;
     private final Action theAction;
     private final int theLevelNumber;
@@ -71,13 +71,6 @@ public class OrderUpdate implements Comparable<OrderUpdate>{
                 ", thePrice=" + thePrice +
                 ", theSize=" + theSize +
                 '}';
-    }
-
-    @Override
-    public int compareTo(OrderUpdate anOtherUpdate) {
-        return anOtherUpdate.equals(this)
-                ? 0
-                : theLevelNumber - anOtherUpdate.theLevelNumber;
     }
 
     public enum Action {

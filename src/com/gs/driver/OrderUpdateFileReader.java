@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.gs.driver.OrderUpdate.*;
@@ -50,12 +49,10 @@ public class OrderUpdateFileReader implements OrderUpdateReceiver {
             }
 
         } catch (IOException anIgnoredEofException) { // We should not get here since we have a file done flag
-            Collections.sort(myNextUpdates);
             return myNextUpdates;
         }
 
         theLastUpdateRead = myUpdate;
-//        Collections.sort(myNextUpdates); // to have levels sorted before
         return myNextUpdates;
     }
 

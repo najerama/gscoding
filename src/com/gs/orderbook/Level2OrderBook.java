@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 public class Level2OrderBook implements OrderBook {
     private static final int DEFAULT_MAX_LEVELS = 10;
 
+    // TODO: Asks should always be higher than bids, vice versa, not clear what to do in this state
     // naive to use an array, maybe use a linked list for easy removal and easy insert, but search sucks, especially
     // when updates are not ordered by level
     private final Level[] theBids;
@@ -93,6 +94,7 @@ public class Level2OrderBook implements OrderBook {
 
     @Override
     public String toString() {
+        // Want to do performance tests on this conversion
         return theSequenceNumber + ","
                 + Arrays.stream(theBids).map(Level::toString).collect(Collectors.joining(","))
                 + Arrays.stream(theAsks).map(Level::toString).collect(Collectors.joining(","));
@@ -128,11 +130,7 @@ public class Level2OrderBook implements OrderBook {
         }
 
         Level() {
-            theEmpty = true;
-        }
-
-        void delete() {
-            theEmpty = true;
+            delete();
         }
 
         void update(OrderUpdate anUpdate) {
@@ -141,15 +139,22 @@ public class Level2OrderBook implements OrderBook {
             theEmpty = false;
         }
 
-        public double getPrice() {
+        void delete() {
+            theEmpty = true;
+        }
+
+        // @VisibleForTesting
+        double getPrice() {
             return thePrice;
         }
 
-        public int getSize() {
+        // @VisibleForTesting
+        int getSize() {
             return theSize;
         }
 
-        public boolean isEmpty() {
+        // @VisibleForTesting
+        boolean isEmpty() {
             return theEmpty;
         }
 
