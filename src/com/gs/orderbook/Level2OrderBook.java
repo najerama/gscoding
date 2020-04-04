@@ -15,8 +15,9 @@ public class Level2OrderBook implements OrderBook {
     private final Level[] theAsks;
     private final int theMaxLevels;
     private long theSequenceNumber;
-    private boolean theBidsAllSeen;
-    private boolean theAsksAllSeen;
+
+    private final boolean[] theSeenSoFar;
+    private boolean theIsCompleted;
 
     public Level2OrderBook() {
         this(DEFAULT_MAX_LEVELS);
@@ -31,16 +32,14 @@ public class Level2OrderBook implements OrderBook {
             theBids[i] = new Level();
             theAsks[i] = new Level();
         }
-        theBidsAllSeen = false;
-        theAsksAllSeen = false;
         theSequenceNumber = 0;
+        theSeenSoFar = new boolean[theMaxLevels*2]; // bids, asks
     }
 
     @Override
     public void update(List<OrderUpdate> anOrderUpdates) {
         for (OrderUpdate myUpdate : anOrderUpdates) {
             theSequenceNumber = myUpdate.getSequenceNumber();
-            checkIfHaveSeenAllLevelsNow(myUpdate);
 
             Level[] myLevels = myUpdate.getSide() == OrderUpdate.Side.BID ? theBids : theAsks;
 
@@ -66,6 +65,7 @@ public class Level2OrderBook implements OrderBook {
                     assert false : "Should never get here";
             }
         }
+        checkIfHaveSeenAllLevelsNow(anOrderUpdates);
     }
 
     // @VisibleForTesting
@@ -87,11 +87,6 @@ public class Level2OrderBook implements OrderBook {
     }
 
     @Override
-    public boolean isComplete() {
-        return theBidsAllSeen && theAsksAllSeen;
-    }
-
-    @Override
     public String getCurrentOrderBook() {
         return toString();
     }
@@ -103,39 +98,25 @@ public class Level2OrderBook implements OrderBook {
                 + Arrays.stream(theAsks).map(Level::toString).collect(Collectors.joining(","));
     }
 
-    // Assume no malformed input, see below for malformed updates
-    private void checkIfHaveSeenAllLevelsNow(OrderUpdate anOrderUpdate) {
-        if (!isComplete() && anOrderUpdate.getLevelNumber() == theMaxLevels -1) { // zero indexed
-            if (anOrderUpdate.getSide() == OrderUpdate.Side.BID) {
-                theBidsAllSeen = true;
-            } else {
-                theAsksAllSeen = true;
-            }
-        }
+    @Override
+    public boolean isComplete() {
+        return theIsCompleted;
     }
 
-    // malformed updates allowed
+    private void checkIfHaveSeenAllLevelsNow(List<OrderUpdate> anOrderUpdate) {
+        if (!theIsCompleted) {
+            for (OrderUpdate myUpdate : anOrderUpdate) {
+                int i = myUpdate.getSide() == OrderUpdate.Side.BID ? myUpdate.getLevelNumber() : myUpdate.getLevelNumber() + theMaxLevels;
+                theSeenSoFar[i] = true;
+            }
 
-//    private boolean theIsCompleted;
-//    @Override
-//    public boolean isComplete() {
-//        return theIsCompleted;
-//    }
-
-//    private final boolean[] theSeenSoFar = new boolean[20]; // bids, asks
-//    private void checkIfHaveSeenAllLevelsNow(List<OrderUpdate> anOrderUpdate) {
-//        if (!theIsCompleted) {
-//            for (OrderUpdate myUpdate : anOrderUpdate) {
-//                int i = myUpdate.getSide() == OrderUpdate.Side.BID ? myUpdate.getLevelNumber() : myUpdate.getLevelNumber() + 10;
-//                theSeenSoFar[i] = true;
-//            }
-//
-//            boolean myIsComplete = true;
-//            for (boolean mySeen : theSeenSoFar) {
-//                myIsComplete &= mySeen;
-//            }
-//            theIsCompleted = myIsComplete;
-//        }
+            boolean myIsComplete = true;
+            for (boolean mySeen : theSeenSoFar) {
+                myIsComplete &= mySeen;
+            }
+            theIsCompleted = myIsComplete;
+        }
+    }
 
     static class Level {
         private double thePrice;

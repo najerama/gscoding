@@ -48,6 +48,27 @@ class Level2OrderBookTest {
         assert theBook.isComplete();
     }
 
+    @Test
+    void fullBookOnSubsequentUpdates() {
+        addUpdate(NEW_LEVEL, BID, 0, 10., 1);
+        addUpdate(NEW_LEVEL, BID, 1, 9., 1);
+        addUpdate(NEW_LEVEL, BID, 2, 8., 1);
+        sendUpdate();
+
+        assert !theBook.isComplete();
+        assertNonEmptyLevels(theBook.bids(), 0);
+        assertEmptyLevels(theBook.asks(), 0);
+
+        addUpdate(DELETE_LEVEL, BID, 2, 8., 1);
+        addUpdate(NEW_LEVEL, ASK, 0, 11., 1);
+        addUpdate(NEW_LEVEL, ASK, 1, 12., 1);
+        addUpdate(NEW_LEVEL, ASK, 2, 13., 1);
+        sendUpdate();
+
+        assertEmptyLevels(theBook.bids(), 2);
+        assertNonEmptyLevels(theBook.asks(), 0);
+        assert theBook.isComplete();
+    }
 
     @Test
     void deleteFirstLevel() {
@@ -58,7 +79,22 @@ class Level2OrderBookTest {
 
         assertEmptyLevels(theBook.bids(), 2);
         assertEmptyLevels(theBook.asks(), 2);
-        assert theBook.isComplete();
+    }
+
+    @Test
+    void insertAfterDeletionsLevel() {
+        sendFullBookUpdate();
+        addUpdate(DELETE_LEVEL, BID, 1, 9., 1);
+        sendUpdate();
+        addUpdate(DELETE_LEVEL, BID, 0, 10., 1);
+        sendUpdate();
+        addUpdate(NEW_LEVEL, BID, 1, 7., 1);
+        sendUpdate();
+
+        assertLevel(theBook.bids()[0], 8., 1);
+        assertLevel(theBook.bids()[1], 7., 1);
+        assertEmptyLevels(theBook.bids(), 2);
+        assertNonEmptyLevels(theBook.asks(), 0);
     }
 
     private void sendFullBookUpdate() {
